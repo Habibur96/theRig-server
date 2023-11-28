@@ -24,6 +24,18 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+    const pcbuilderCollection = client.db("theRig").collection("cpu");
+
+    //pcbuilder related api
+
+    app.get("/:pcbuilderProductName/:category", async (req, res) => {
+      const category = req.params.category;
+      const query = { category: category };
+      const result = await pcbuilderCollection.find(query).toArray();
+      console.log(result);
+      res.send(result);
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(

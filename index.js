@@ -26,15 +26,30 @@ async function run() {
     await client.connect();
     const pcbuilderCollection = client.db("theRig").collection("cpu");
 
-    //pcbuilder related api
 
+
+    //pcbuilder related api
     app.get("/:pcbuilderProductName/:category", async (req, res) => {
       const category = req.params.category;
       const query = { category: category };
       const result = await pcbuilderCollection.find(query).toArray();
-      console.log(result);
       res.send(result);
     });
+
+
+
+    app.get("/cpu/:collectionName/:name", async (req, res) => {
+      const name = req.params.name;
+       const query = { name: name };
+      // console.log(query);
+      const result = await pcbuilderCollection.find(query).toArray();
+      // console.log({ result });
+      res.send(result);
+    });
+
+   
+
+  
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });

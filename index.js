@@ -34,11 +34,21 @@ async function run() {
       res.send(result);
     });
 
+    //This api is created for searchbar
+    app.get("/products", async (req, res) => {
+      const search = req.query.search;
+      console.log(search);
+      const query = { name: { $regex: search, $options: "i" } };
+      console.log({ query });
+      const result = await pcbuilderCollection.find(query).toArray();
+      console.log("search = ", { result });
+      res.send(result);
+    });
+
     app.get("/:test/replace/:id", async (req, res) => {
       const id = req.params.id;
       console.log("id = ", id);
       const filter = { _id: new ObjectId(id) };
-
       const result = await pcbuilderCollection.findOne(filter);
       console.log(result);
       res.send(result);
@@ -47,9 +57,7 @@ async function run() {
     app.get("/cpu/:collectionName/:name", async (req, res) => {
       const name = req.params.name;
       const query = { name: name };
-      // console.log(query);
       const result = await pcbuilderCollection.find(query).toArray();
-      // console.log({ result });
       res.send(result);
     });
 

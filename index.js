@@ -25,11 +25,12 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
     const pcbuilderCollection = client.db("theRig").collection("cpu");
+    const pcbuilderCartCollection = client
+      .db("theRig")
+      .collection("pcbuilderCart");
 
-    //pcbuilder related api
-    app.get("/:pcbuilderProductName/:category", async (req, res) => {
-      const category = req.params.category;
-      const query = { category: category };
+    app.get("/cpu", async (req, res) => {
+      const query = req.body;
       const result = await pcbuilderCollection.find(query).toArray();
       res.send(result);
     });
@@ -37,20 +38,46 @@ async function run() {
     //This api is created for searchbar
     app.get("/products", async (req, res) => {
       const search = req.query.search;
-      console.log(search);
+      // console.log(search);
       const query = { name: { $regex: search, $options: "i" } };
-      console.log({ query });
+      // console.log({ query });
       const result = await pcbuilderCollection.find(query).toArray();
-      console.log("search = ", { result });
+      // console.log("search = ", { result });
       res.send(result);
     });
 
+    // Assuming you have your Express app and MongoDB connection set up
+
+    // Define your route for fetching a single product by ID
+    app.get("/products/:productId", async (req, res) => {
+      try {
+        const productId = req.params.productId;
+
+        // Assuming you have a unique identifier for your products, replace "_id" with your actual identifier
+
+        const query = { _id: new ObjectId(productId) };
+        const product = await pcbuilderCollection.findOne(query);
+
+        console.log({ product, query, productId });
+        if (!product) {
+          return res.status(404).json({ error: "Product not found" });
+        }
+
+        res.json(product);
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal Server Error" });
+      }
+    });
+
+    // Example request: GET /products/12345
+
     app.get("/:test/replace/:id", async (req, res) => {
       const id = req.params.id;
-      console.log("id = ", id);
+      // console.log("id = ", id);
       const filter = { _id: new ObjectId(id) };
       const result = await pcbuilderCollection.findOne(filter);
-      console.log(result);
+      // console.log(result);
       res.send(result);
     });
 
@@ -60,6 +87,46 @@ async function run() {
       const result = await pcbuilderCollection.find(query).toArray();
       res.send(result);
     });
+
+    //====================pcbuilderCart related api=========================
+
+    app.post("/pcbuilderCart", async (req, res) => {
+      const query = req.body;
+      console.log({ query });
+      const result = await pcbuilderCartCollection.insertOne(query);
+      res.send(result);
+    });
+    app.get("/pcbuilderCart", async (req, res) => {
+      const query = req.body;
+
+      const result = await pcbuilderCartCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.get("/pcbuilderCart/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      console.log("filterId", { filter });
+      const result = await pcbuilderCartCollection.findOne(filter);
+      res.send(result);
+    });
+
+    //delete from cart
+    app.delete("/pcbuilderCart/:id", async (req, res) => {
+      const id = req.params.id;
+      // console.log({ id });
+      const query = { _id: new ObjectId(id) };
+      // console.log("deletequery", { query });
+      const result = await pcbuilderCartCollection.deleteOne(query);
+      // console.log({ result });
+      res.send(result);
+    });
+    // app.delete("/pcbuilderCart/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const query = { _id: new ObjectId(id) };
+    //   console.log("deletequery",{query})
+    //   const result = await pcbuilderCartCollection.deleteOne(query);
+    //   res.send(result);
+    // });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });

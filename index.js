@@ -25,6 +25,7 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
     const pcbuilderCollection = client.db("theRig").collection("cpu");
+    const cartCollection = client.db("theRig").collection("cart");
     const pcbuilderCartCollection = client
       .db("theRig")
       .collection("pcbuilderCart");
@@ -38,11 +39,11 @@ async function run() {
     //This api is created for searchbar
     app.get("/products", async (req, res) => {
       const search = req.query.search;
-      // console.log(search);
+
       const query = { name: { $regex: search, $options: "i" } };
-      // console.log({ query });
+
       const result = await pcbuilderCollection.find(query).toArray();
-      // console.log("search = ", { result });
+
       res.send(result);
     });
 
@@ -96,37 +97,50 @@ async function run() {
       const result = await pcbuilderCartCollection.insertOne(query);
       res.send(result);
     });
-    app.get("/pcbuilderCart", async (req, res) => {
-      const query = req.body;
 
+    app.get("/pcbuilderCart", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      // const query = req.body;
       const result = await pcbuilderCartCollection.find(query).toArray();
       res.send(result);
     });
-    app.get("/pcbuilderCart/:id", async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      console.log("filterId", { filter });
-      const result = await pcbuilderCartCollection.findOne(filter);
-      res.send(result);
-    });
+
+    //Note: This api was created for ReplaceProduct.jsx file. apatoto ata kono drkar nai....
+    // app.get("/pcbuilderCart/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const filter = { _id: new ObjectId(id) };
+    //   const result = await pcbuilderCartCollection.findOne(filter);
+    //   res.send(result);
+    // });
 
     //delete from cart
     app.delete("/pcbuilderCart/:id", async (req, res) => {
       const id = req.params.id;
-      // console.log({ id });
+
       const query = { _id: new ObjectId(id) };
-      // console.log("deletequery", { query });
+
       const result = await pcbuilderCartCollection.deleteOne(query);
-      // console.log({ result });
+
       res.send(result);
     });
-    // app.delete("/pcbuilderCart/:id", async (req, res) => {
-    //   const id = req.params.id;
-    //   const query = { _id: new ObjectId(id) };
-    //   console.log("deletequery",{query})
-    //   const result = await pcbuilderCartCollection.deleteOne(query);
-    //   res.send(result);
-    // });
+
+    // ===========================   Cart related Apis===================
+
+    app.post("/cart", async (req, res) => {
+      const query = req.body;
+      console.log({ query });
+      const result = await cartCollection.insertOne(query);
+      res.send(result);
+    });
+
+    app.get("/cart", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      // const query = req.body;
+      const result = await cartCollection.find(query).toArray();
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });

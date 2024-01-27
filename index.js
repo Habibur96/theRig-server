@@ -61,8 +61,7 @@ async function run() {
       res.send({ token });
     });
 
-    app.get("/cpu", verifyJwt, async (req, res) => {
-      console.log("authorization success");
+    app.get("/cpu", async (req, res) => {
       const query = req.body;
       const result = await pcbuilderCollection.find(query).toArray();
       res.send(result);
@@ -166,11 +165,26 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/cart", async (req, res) => {
-      const email = req.query.email;
-      const query = { email: email };
+    app.get("/cart", verifyJwt, async (req, res) => {
+      const decoded = req.decoded;
+      if (decoded.email !== req.query.email) {
+        return res.status(403).send({ error: 1, message: "forbidden access" });
+      }
+
+      let query = {};
+      if (req.query?.email) {
+        query = { email: req.query.email };
+      }
+
       // const query = req.body;
       const result = await cartCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.delete("/cart/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await cartCollection.deleteOne(query);
       res.send(result);
     });
 

@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
+const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 3000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
@@ -20,6 +21,26 @@ const client = new MongoClient(uri, {
   },
 });
 
+const verifyJwt = (req, res, next) => {
+  const authorization = req.headers.authorization;
+  if (!authorization) {
+    return res
+      .status(401)
+      .send({ error: true, message: "unauthorized access" });
+  }
+  const token = authorization.split(" ")[1];
+
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, decoded) => {
+    if (error) {
+      return res
+        .status(401)
+        .send({ error: true, message: "unauthorized access" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+};
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -30,7 +51,18 @@ async function run() {
       .db("theRig")
       .collection("pcbuilderCart");
 
-    app.get("/cpu", async (req, res) => {
+    app.post("/jwt", (req, res) => {
+      const user = req.body;
+      console.log({ user });
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "2h",
+      });
+      console.log(token);
+      res.send({ token });
+    });
+
+    app.get("/cpu", verifyJwt, async (req, res) => {
+      console.log("authorization success");
       const query = req.body;
       const result = await pcbuilderCollection.find(query).toArray();
       res.send(result);

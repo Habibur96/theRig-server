@@ -47,6 +47,7 @@ async function run() {
     // await client.connect();
     const pcbuilderCollection = client.db("theRig").collection("cpu");
     const cartCollection = client.db("theRig").collection("cart");
+    const usersCollection = client.db("theRig").collection("users");
     const pcbuilderCartCollection = client
       .db("theRig")
       .collection("pcbuilderCart");
@@ -134,6 +135,18 @@ async function run() {
       const query = { email: email };
       // const query = req.body;
       const result = await pcbuilderCartCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // ======================User related apis===================
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      const query = { email: user.email };
+      const existingUser = await usersCollection.findOne(query);
+      if (existingUser) {
+        return res.send({ message: "user already exits" });
+      }
+      const result = await usersCollection.insertOne(query);
       res.send(result);
     });
 

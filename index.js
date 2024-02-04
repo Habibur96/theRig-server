@@ -152,7 +152,7 @@ async function run() {
     });
 
     // ======================User related apis===================
-    app.get("/users", verifyJwt, varifyAdminJwt, async (req, res) => {
+    app.get("/users",verifyJwt, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
@@ -165,7 +165,7 @@ async function run() {
       if (existingUser) {
         return res.send({ message: "user already exits" });
       }
-      const result = await usersCollection.insertOne(query);
+      const result = await usersCollection.insertOne(user);
       res.send(result);
     });
 
@@ -250,12 +250,34 @@ async function run() {
       res.send(result);
     });
 
+
     app.delete("/cart/:id", async (req, res) => {
       const id = req.params.id;
+      console.log({id})
       const query = { _id: new ObjectId(id) };
-      const result = await cartCollection.deleteOne(query);
+      const result = await cartCollection.deleteMany(query);
       res.send(result);
     });
+
+    // app.delete("/cart/clear/:email", verifyJwt,  async (req, res) => {
+    //   const decoded = req.decoded;
+    //   if (decoded.email !== req.params.email) {
+    //     return res.status(403).send({ error: 1, message: "forbidden access" });
+    //   }
+
+    //   let query = {};
+    //   if (req.params?.email) {
+    //     query = { email: req.params.email };
+    //   }
+    //   // const email = req.params.email;
+    //   console.log(email)
+    //   // const query = { title: { $regex: "email" } };
+    //   // const query = { _id: new ObjectId(id) };
+    //   const result = await cartCollection.deleteOne(query);
+    //   // console.log("Result = ",result)
+    //   res.send(result);
+    // });
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });

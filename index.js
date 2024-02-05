@@ -62,7 +62,6 @@ async function run() {
       res.send({ token });
     });
 
-
     // Warning: use verifyJWT before using verifyAdmin
     const varifyAdminJwt = async (req, res, next) => {
       const email = req.decoded.email;
@@ -152,11 +151,10 @@ async function run() {
     });
 
     // ======================User related apis===================
-    app.get("/users",verifyJwt, async (req, res) => {
+    app.get("/users", verifyJwt, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
-
 
     app.post("/users", async (req, res) => {
       const user = req.body;
@@ -168,7 +166,6 @@ async function run() {
       const result = await usersCollection.insertOne(user);
       res.send(result);
     });
-
 
     app.get("/users/admin/:email", verifyJwt, async (req, res) => {
       const email = req.params.email;
@@ -183,8 +180,7 @@ async function run() {
       res.send(result);
     });
 
-
-     app.patch("/users/admin/:id", async (req, res) => {
+    app.patch("/users/admin/:id", async (req, res) => {
       const id = req.params.id;
       console.log(id);
       const filter = { _id: new ObjectId(id) };
@@ -197,8 +193,6 @@ async function run() {
       res.send(result);
     });
 
-
-    
     app.delete("/users/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
@@ -250,34 +244,13 @@ async function run() {
       res.send(result);
     });
 
-
     app.delete("/cart/:id", async (req, res) => {
       const id = req.params.id;
-      console.log({id})
+      console.log({ id });
       const query = { _id: new ObjectId(id) };
       const result = await cartCollection.deleteMany(query);
       res.send(result);
     });
-
-    // app.delete("/cart/clear/:email", verifyJwt,  async (req, res) => {
-    //   const decoded = req.decoded;
-    //   if (decoded.email !== req.params.email) {
-    //     return res.status(403).send({ error: 1, message: "forbidden access" });
-    //   }
-
-    //   let query = {};
-    //   if (req.params?.email) {
-    //     query = { email: req.params.email };
-    //   }
-    //   // const email = req.params.email;
-    //   console.log(email)
-    //   // const query = { title: { $regex: "email" } };
-    //   // const query = { _id: new ObjectId(id) };
-    //   const result = await cartCollection.deleteOne(query);
-    //   // console.log("Result = ",result)
-    //   res.send(result);
-    // });
-
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });

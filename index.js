@@ -146,7 +146,7 @@ async function run() {
 
     app.post("/pcbuilderCart", async (req, res) => {
       const query = req.body;
-      console.log({ query });
+      // console.log({ query });
       const result = await pcbuilderCartCollection.insertOne(query);
       res.send(result);
     });
@@ -191,7 +191,7 @@ async function run() {
 
     app.patch("/users/admin/:id", async (req, res) => {
       const id = req.params.id;
-      console.log(id);
+      // console.log(id);
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
@@ -232,7 +232,7 @@ async function run() {
 
     app.post("/cart", async (req, res) => {
       const query = req.body;
-      console.log({ query });
+      // console.log({ query });
       const result = await cartCollection.insertOne(query);
       res.send(result);
     });
@@ -255,7 +255,7 @@ async function run() {
 
     app.delete("/cart/:id", async (req, res) => {
       const id = req.params.id;
-      console.log({ id });
+      // console.log({ id });
       const query = { _id: new ObjectId(id) };
       const result = await cartCollection.deleteMany(query);
       res.send(result);
@@ -280,7 +280,7 @@ async function run() {
     //payment related api
     app.get("/payments/:email", verifyJwt, async (req, res) => {
       const query = { email: req.params.email };
-      console.log(query)
+      // console.log(query);
       if (req.params.email !== req.decoded.email) {
         return res.status(403).send({ message: "forbidden access" });
       }
@@ -290,14 +290,14 @@ async function run() {
 
     app.post("/payments", verifyJwt, async (req, res) => {
       const payment = req.body;
-      console.log("payment = ", payment);
+      // console.log("payment = ", payment);
       const insertResult = await paymentCollection.insertOne(payment);
 
       //delete each item from the cart
       const query = {
         _id: { $in: payment.cartIds.map((id) => new ObjectId(id)) },
       };
-      console.log({ insertResult, query });
+      // console.log({ insertResult, query });
       const deleteResult = await cartCollection.deleteMany(query);
 
       //send user email about payment confirmation
@@ -319,6 +319,45 @@ async function run() {
         .catch((err) => console.log(err)); // logs any error`;
 
       res.send({ insertResult, deleteResult });
+    });
+
+    //=========================DashBoard admin related apis========================
+
+    app.get("/payments", verifyJwt, varifyAdminJwt, async (req, res) => {
+      const query = req.body;
+      const result = await paymentCollection.find(query).toArray();
+
+      res.send(result);
+    });
+
+    app.put("/payments/:id", verifyJwt, varifyAdminJwt, async (req, res) => {
+      try {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const options = { upsert: true };
+        const updateOrderStatus = req.body.orderStatus;
+        const orderStatusUpdate = {
+          $set: {
+            orderStatus: updateOrderStatus,
+          },
+        };
+        const result = await paymentCollection.updateOne(
+          filter,
+          orderStatusUpdate,
+          options
+        );
+        res.send(result);
+      } catch (err) {
+        res.send(500).send("Error Occured");
+      }
+    });
+
+    app.delete("/payments/:id", verifyJwt, varifyAdminJwt, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await paymentCollection.deleteOne(query);
+      console.log("result = ", result);
+      res.send(result);
     });
 
     // Send a ping to confirm a successful connection

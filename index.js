@@ -83,11 +83,19 @@ async function run() {
       }
       next();
     };
+
+    app.post("/cpu", verifyJwt, varifyAdminJwt, async (req, res) => {
+      const query = req.body;
+      const result = await pcbuilderCollection.insertOne(query);
+      res.send(result);
+      console.log(result);
+    });
     app.get("/cpu", async (req, res) => {
       const query = req.body;
       const result = await pcbuilderCollection.find(query).toArray();
       res.send(result);
     });
+    
 
     //This api is created for searchbar
     app.get("/products", async (req, res) => {

@@ -90,12 +90,30 @@ async function run() {
       res.send(result);
       console.log(result);
     });
+    app.get("/cpu/search", verifyJwt, varifyAdminJwt,async (req, res) => {
+      const sort = req.query.sort;
+      const search = req.query.search;
+      console.log(search);
+      const query = { name: { $regex: search, $options: "i" } };
+      const options = {
+        // sort matched documents in descending order by rating
+        sort: {
+          price: sort === "asc" ? 1 : -1,
+        },
+      };
+      console.log("oPTION", options)
+      console.log("query", query)
+      const cursor = pcbuilderCollection.find(query, options);
+      const result = await cursor.toArray();
+      console.log("Result = ", result);
+      res.send(result);
+    });
+
     app.get("/cpu", async (req, res) => {
       const query = req.body;
       const result = await pcbuilderCollection.find(query).toArray();
       res.send(result);
     });
-    
 
     //This api is created for searchbar
     app.get("/products", async (req, res) => {

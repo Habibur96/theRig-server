@@ -71,6 +71,8 @@ async function run() {
       res.send({ token });
     });
 
+
+
     // Warning: use verifyJWT before using verifyAdmin
     const varifyAdminJwt = async (req, res, next) => {
       const email = req.decoded.email;
@@ -90,10 +92,10 @@ async function run() {
       res.send(result);
       console.log(result);
     });
-    app.get("/cpu/search", verifyJwt, varifyAdminJwt,async (req, res) => {
+    app.get("/cpu/search", verifyJwt, varifyAdminJwt, async (req, res) => {
       const sort = req.query.sort;
       const search = req.query.search;
-      console.log(search);
+
       const query = { name: { $regex: search, $options: "i" } };
       const options = {
         // sort matched documents in descending order by rating
@@ -101,11 +103,10 @@ async function run() {
           price: sort === "asc" ? 1 : -1,
         },
       };
-      console.log("oPTION", options)
-      console.log("query", query)
+
       const cursor = pcbuilderCollection.find(query, options);
       const result = await cursor.toArray();
-      console.log("Result = ", result);
+
       res.send(result);
     });
 
@@ -191,6 +192,32 @@ async function run() {
       res.send(result);
     });
 
+    app.patch("/users/:id", verifyJwt, async (req, res) => {
+      try {
+        const id = req.params.id;
+        console.log("Id = ", id);
+
+        const filter = { _id: new ObjectId(id) };
+        const options = { upsert: true };
+        const updatestarpoints = req.body.points;
+        console.log("UpdatestarPoints = ", updatestarpoints);
+        const userstarpoints = {
+          $set: {
+            starpoints: updatestarpoints,
+          },
+        };
+        console.log("UserstarPoints = ", userstarpoints);
+        const result = await usersCollection.updateOne(
+          filter,
+          userstarpoints,
+          options
+        );
+        console.log("Result = ", result);
+        res.send(result);
+      } catch (err) {
+        res.status(400).send("Error Occured");
+      }
+    });
     app.post("/users", async (req, res) => {
       const user = req.body;
       const query = { email: user.email };
@@ -304,26 +331,17 @@ async function run() {
     });
 
     //payment related api
-    app.get("/payments/:email", verifyJwt, async (req, res) => {
-      const query = { email: req.params.email };
-      // console.log(query);
-      if (req.params.email !== req.decoded.email) {
-        return res.status(403).send({ message: "forbidden access" });
-      }
-      const result = await paymentCollection.find(query).toArray();
-      res.send(result);
-    });
 
     app.post("/payments", verifyJwt, async (req, res) => {
       const payment = req.body;
-      // console.log("payment = ", payment);
+
       const insertResult = await paymentCollection.insertOne(payment);
 
       //delete each item from the cart
       const query = {
         _id: { $in: payment.cartIds.map((id) => new ObjectId(id)) },
       };
-      // console.log({ insertResult, query });
+
       const deleteResult = await cartCollection.deleteMany(query);
 
       //send user email about payment confirmation
@@ -345,6 +363,16 @@ async function run() {
         .catch((err) => console.log(err)); // logs any error`;
 
       res.send({ insertResult, deleteResult });
+    });
+
+    app.get("/payments/:email", verifyJwt, async (req, res) => {
+      const query = { email: req.params.email };
+
+      if (req.params.email !== req.decoded.email) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      const result = await paymentCollection.find(query).toArray();
+      res.send(result);
     });
 
     //=========================DashBoard admin related apis========================

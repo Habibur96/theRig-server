@@ -71,8 +71,7 @@ async function run() {
       res.send({ token });
     });
 
-
-
+    
     // Warning: use verifyJWT before using verifyAdmin
     const varifyAdminJwt = async (req, res, next) => {
       const email = req.decoded.email;
@@ -92,10 +91,10 @@ async function run() {
       res.send(result);
       console.log(result);
     });
+
     app.get("/cpu/search", verifyJwt, varifyAdminJwt, async (req, res) => {
       const sort = req.query.sort;
       const search = req.query.search;
-
       const query = { name: { $regex: search, $options: "i" } };
       const options = {
         // sort matched documents in descending order by rating
@@ -103,10 +102,8 @@ async function run() {
           price: sort === "asc" ? 1 : -1,
         },
       };
-
       const cursor = pcbuilderCollection.find(query, options);
       const result = await cursor.toArray();
-
       res.send(result);
     });
 
@@ -193,10 +190,9 @@ async function run() {
     });
 
     app.patch("/users/:id", verifyJwt, async (req, res) => {
-      try {
+      try { 
         const id = req.params.id;
         console.log("Id = ", id);
-
         const filter = { _id: new ObjectId(id) };
         const options = { upsert: true };
         const updatestarpoints = req.body.points;
@@ -218,6 +214,8 @@ async function run() {
         res.status(400).send("Error Occured");
       }
     });
+
+
     app.post("/users", async (req, res) => {
       const user = req.body;
       const query = { email: user.email };
@@ -334,14 +332,11 @@ async function run() {
 
     app.post("/payments", verifyJwt, async (req, res) => {
       const payment = req.body;
-
       const insertResult = await paymentCollection.insertOne(payment);
-
       //delete each item from the cart
       const query = {
         _id: { $in: payment.cartIds.map((id) => new ObjectId(id)) },
       };
-
       const deleteResult = await cartCollection.deleteMany(query);
 
       //send user email about payment confirmation

@@ -60,6 +60,7 @@ async function run() {
       .db("theRig")
       .collection("pcbuilderCart");
     const paymentCollection = client.db("theRig").collection("payments");
+    const wishlistCollection = client.db("theRig").collection("wishlist");
 
     app.post("/jwt", (req, res) => {
       const user = req.body;
@@ -71,7 +72,6 @@ async function run() {
       res.send({ token });
     });
 
-    
     // Warning: use verifyJWT before using verifyAdmin
     const varifyAdminJwt = async (req, res, next) => {
       const email = req.decoded.email;
@@ -190,7 +190,7 @@ async function run() {
     });
 
     app.patch("/users/:id", verifyJwt, async (req, res) => {
-      try { 
+      try {
         const id = req.params.id;
         console.log("Id = ", id);
         const filter = { _id: new ObjectId(id) };
@@ -214,7 +214,6 @@ async function run() {
         res.status(400).send("Error Occured");
       }
     });
-
 
     app.post("/users", async (req, res) => {
       const user = req.body;
@@ -309,6 +308,19 @@ async function run() {
       // console.log({ id });
       const query = { _id: new ObjectId(id) };
       const result = await cartCollection.deleteMany(query);
+      res.send(result);
+    });
+
+    // ===============WishList related apis===================
+    app.post("/wishlist", verifyJwt, async (req, res) => {
+      const query = req.body;
+      const result = await wishlistCollection.insertOne(query);
+      res.send(result);
+    });
+
+    app.get("/wishlist", verifyJwt, async (req, res) => {
+      const query = req.body;
+      const result = await wishlistCollection.find(query).toArray()
       res.send(result);
     });
 

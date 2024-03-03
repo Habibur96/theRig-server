@@ -280,10 +280,11 @@ async function run() {
 
     // ===========================   Cart related Apis===================
 
-    app.post("/cart", async (req, res) => {
+    app.post("/cart",verifyJwt, async (req, res) => {
       const query = req.body;
-      // console.log({ query });
+       console.log({ query });
       const result = await cartCollection.insertOne(query);
+      console.log(result)
       res.send(result);
     });
 
@@ -320,7 +321,23 @@ async function run() {
 
     app.get("/wishlist", verifyJwt, async (req, res) => {
       const query = req.body;
-      const result = await wishlistCollection.find(query).toArray()
+      const result = await wishlistCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.delete("/wishlist/:id", verifyJwt, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await wishlistCollection.deleteOne(query);
+      console.log("result = ", result);
+      res.send(result);
+    });
+
+    app.delete("/payments/:id", verifyJwt, varifyAdminJwt, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await paymentCollection.deleteOne(query);
+      console.log("result = ", result);
       res.send(result);
     });
 

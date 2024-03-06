@@ -61,6 +61,7 @@ async function run() {
       .collection("pcbuilderCart");
     const paymentCollection = client.db("theRig").collection("payments");
     const wishlistCollection = client.db("theRig").collection("wishlist");
+    const guidesBuildCollection = client.db("theRig").collection("guideBuild");
 
     app.post("/jwt", (req, res) => {
       const user = req.body;
@@ -183,6 +184,13 @@ async function run() {
       res.send(result);
     });
 
+
+
+    //========================GuidesBuild related apis==============
+    //guidesBuildCollection
+
+
+    app.post("")
     // ======================User related apis===================
     app.get("/users", verifyJwt, async (req, res) => {
       const result = await usersCollection.find().toArray();

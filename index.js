@@ -184,13 +184,16 @@ async function run() {
       res.send(result);
     });
 
-
-
     //========================GuidesBuild related apis==============
-    //guidesBuildCollection
 
+    app.post("/createBuild", verifyJwt, varifyAdminJwt, async (req, res) => {
+      const query = req.body;
+      const result = await guidesBuildCollection.insertOne(query);
+      res.send(result);
+      console.log(result);
+    });
 
-    app.post("")
+    app.post("");
     // ======================User related apis===================
     app.get("/users", verifyJwt, async (req, res) => {
       const result = await usersCollection.find().toArray();
@@ -288,11 +291,11 @@ async function run() {
 
     // ===========================   Cart related Apis===================
 
-    app.post("/cart",verifyJwt, async (req, res) => {
+    app.post("/cart", verifyJwt, async (req, res) => {
       const query = req.body;
-       console.log({ query });
+      console.log({ query });
       const result = await cartCollection.insertOne(query);
-      console.log(result)
+      console.log(result);
       res.send(result);
     });
 

@@ -193,7 +193,14 @@ async function run() {
       console.log(result);
     });
 
-    app.post("");
+    app.get("/createBuild", verifyJwt, async (req, res) => {
+
+      const result = await guidesBuildCollection.find().toArray();
+      res.send(result);
+      console.log(result);
+    });
+
+
     // ======================User related apis===================
     app.get("/users", verifyJwt, async (req, res) => {
       const result = await usersCollection.find().toArray();

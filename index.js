@@ -62,6 +62,8 @@ async function run() {
     const paymentCollection = client.db("theRig").collection("payments");
     const wishlistCollection = client.db("theRig").collection("wishlist");
     const guidesBuildCollection = client.db("theRig").collection("guideBuild");
+    const reviewCollection = client.db("theRig").collection("review");
+    const questionCollection = client.db("theRig").collection("question");
 
     app.post("/jwt", (req, res) => {
       const user = req.body;
@@ -194,12 +196,10 @@ async function run() {
     });
 
     app.get("/createBuild", verifyJwt, async (req, res) => {
-
       const result = await guidesBuildCollection.find().toArray();
       res.send(result);
       console.log(result);
     });
-
 
     // ======================User related apis===================
     app.get("/users", verifyJwt, async (req, res) => {
@@ -293,6 +293,34 @@ async function run() {
 
       const result = await pcbuilderCartCollection.deleteOne(query);
 
+      res.send(result);
+    });
+
+    // ===================== Review related apis=======================
+
+    app.post("/review", verifyJwt, async (req, res) => {
+      const query = req.body;
+      const result = await reviewCollection.insertOne(query);
+      res.send(result);
+    });
+
+    app.get("/review", verifyJwt, async (req, res) => {
+      const query = req.body;
+      const result = await reviewCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // ===================== User Question Related Apis====================
+
+    app.post("/question", verifyJwt, async (req, res) => {
+      const query = req.body;
+      const result = await questionCollection.insertOne(query);
+      res.send(result);
+    });
+
+    app.get("/question", verifyJwt, async (req, res) => {
+      const query = req.body;
+      const result = await questionCollection.find(query).toArray();
       res.send(result);
     });
 

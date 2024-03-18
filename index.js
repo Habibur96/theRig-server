@@ -64,6 +64,7 @@ async function run() {
     const guidesBuildCollection = client.db("theRig").collection("guideBuild");
     const reviewCollection = client.db("theRig").collection("review");
     const questionCollection = client.db("theRig").collection("question");
+    const couponCollection = client.db("theRig").collection("coupon");
 
     app.post("/jwt", (req, res) => {
       const user = req.body;
@@ -198,17 +199,128 @@ async function run() {
     app.get("/createBuild", verifyJwt, async (req, res) => {
       const result = await guidesBuildCollection.find().toArray();
       res.send(result);
-      console.log(result);
+      // console.log(result);
     });
 
-    app.delete("/createBuild/:id", verifyJwt, varifyAdminJwt, async (req, res) => {
-      const id = req.params.id;
-      console.log(id)
-      const filter = { _id: new ObjectId(id) };
-      const result = await guidesBuildCollection.deleteOne(filter);
-      res.send(result);
-    });
+    app.delete(
+      "/createBuild/:id",
+      verifyJwt,
+      varifyAdminJwt,
+      async (req, res) => {
+        const id = req.params.id;
+        console.log(id);
+        const filter = { _id: new ObjectId(id) };
+        const result = await guidesBuildCollection.deleteOne(filter);
+        res.send(result);
+      }
+    );
 
+    // app.put("/createBuild/:id", verifyJwt, varifyAdminJwt, async (req, res) => {
+    //   try {
+    //     const id = req.params.id;
+    //     console.log("Id = ", id);
+    //     const filter = { _id: new ObjectId(id) };
+    //     const options = { upsert: true };
+    //     const updatereadyBuild = req.body;
+    //     const readyBuildUpdate = {
+    //       $set: {
+    //         cpuName: updatereadyBuild.cpuName,
+    //         cpuImg: updatereadyBuild.cpuImg,
+    //         cpuModel: updatereadyBuild.cpuModel,
+    //         cpuPrice: updatereadyBuild.cpuPrice,
+
+    //         cpuCoolerName: updatereadyBuild.cpuCoolerName,
+    //         cpuCoolerImg: updatereadyBuild.cpuCoolerImg,
+    //         cpuCoolerModel: updatereadyBuild.cpuCoolerModel,
+    //         cpuCoolerPrice: updatereadyBuild.cpuCoolerPrice,
+
+    //         mbName: updatereadyBuild.mbName,
+    //         mbImg: updatereadyBuild.mbImg,
+    //         mbModel: updatereadyBuild.mbModel,
+    //         mbPrice: updatereadyBuild.mbPrice,
+
+    //         memoryName: updatereadyBuild.memoryName,
+    //         memoryImg: updatereadyBuild.memoryImg,
+    //         memoryModel: updatereadyBuild.memoryModel,
+    //         memoryPrice: updatereadyBuild.memoryPrice,
+
+    //         monitorName: updatereadyBuild.monitorName,
+    //         monitorImg: updatereadyBuild.monitorImg,
+    //         monitorModel: updatereadyBuild.monitorModel,
+    //         monitorPrice: updatereadyBuild.monitorPrice,
+
+    //         storageName: updatereadyBuild.storageName,
+    //         storageImg: updatereadyBuild.storageImg,
+    //         storageModel: updatereadyBuild.storageModel,
+    //         storagePrice: updatereadyBuild.storagePrice,
+
+    //         gpuName: updatereadyBuild.gpuName,
+    //         gpuImg: updatereadyBuild.gpuImg,
+    //         gpuModel: updatereadyBuild.gpuModel,
+    //         gpuPrice: updatereadyBuild.gpuPrice,
+
+    //         caseName: updatereadyBuild.caseName,
+    //         caseImg: updatereadyBuild.caseImg,
+    //         caseModel: updatereadyBuild.caseModel,
+    //         casePrice: updatereadyBuild.casePrice,
+
+    //         psuName: updatereadyBuild.psuName,
+    //         psuImg: updatereadyBuild.psuImg,
+    //         psuModel: updatereadyBuild.psuModel,
+    //         psuPrice: updatereadyBuild.psuPrice,
+
+    //         img: updatereadyBuild.imgURL,
+    //         // couponsCode: updatereadyBuild.couponsCode,
+    //         // couponsDiscount: updatereadyBuild.couponsDiscount,
+    //         // startDate: updatereadyBuild.startDate,
+    //         // endDate: updatereadyBuild.endDate,
+
+    //         buildName: updatereadyBuild.buildName,
+    //         details: updatereadyBuild.details,
+    //       },
+    //     };
+    //     const result = await guidesBuildCollection.updateOne(
+    //       filter,
+    //       readyBuildUpdate,
+    //       options
+    //     );
+    //     res.send(result);
+    //   } catch (err) {
+    //     res.send(500).send("Error Occured");
+    //   }
+    // });
+
+    // app.put("/createBuild/:id", verifyJwt, varifyAdminJwt, async (req, res) => {
+    //   try {
+    //     const id = req.params.id;
+    //     console.log("Id = ", id);
+    //     const filter = { _id: new ObjectId(id) };
+    //     console.log("filter = ", filter);
+    //     const updatereadyBuild = req.body;
+    //     console.log("updatereadyBuild = ", updatereadyBuild);
+
+    //     const readyBuildUpdate = { $set: {} }; // Initialize with $set operator
+    //     for (const key in updatereadyBuild) {
+    //       if (updatereadyBuild[key] !== undefined) {
+
+    //         readyBuildUpdate.$set[key] = updatereadyBuild[key];
+    //       }
+    //     }
+
+    //     // Log the constructed update object for debugging
+    //     console.log("readyBuildUpdate = ", readyBuildUpdate);
+
+    //     const result = await guidesBuildCollection.updateOne(
+    //       filter,
+    //       readyBuildUpdate
+    //     );
+    //     console.log("Result = ", result);
+    //     res.send(result);
+    //   } catch (err) {
+    //     console.error(err); // Log the error for debugging
+    //     res.status(500).send("Error Occurred");
+    //   }
+    // });
     // ======================User related apis===================
     app.get("/users", verifyJwt, async (req, res) => {
       const result = await usersCollection.find().toArray();
@@ -489,6 +601,21 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const result = await paymentCollection.deleteOne(query);
       console.log("result = ", result);
+      res.send(result);
+    });
+
+    // =======================Coupon related Apis=================
+
+    app.post("/coupon", verifyJwt, varifyAdminJwt, async (req, res) => {
+      const query = req.body;
+      const result = await couponCollection.insertOne(query);
+      res.send(result);
+    });
+
+    app.get("/coupon", verifyJwt, varifyAdminJwt, async (req, res) => {
+      const query = req.body;
+      const result = await couponCollection.find(query).toArray();
+
       res.send(result);
     });
 

@@ -615,6 +615,13 @@ async function run() {
     app.get("/coupon", verifyJwt, varifyAdminJwt, async (req, res) => {
       const query = req.body;
       const result = await couponCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.delete("/coupon/:id", verifyJwt, varifyAdminJwt, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await couponCollection.deleteOne(query);
 
       res.send(result);
     });

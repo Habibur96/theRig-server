@@ -215,80 +215,80 @@ async function run() {
       }
     );
 
-    // app.put("/createBuild/:id", verifyJwt, varifyAdminJwt, async (req, res) => {
-    //   try {
-    //     const id = req.params.id;
-    //     console.log("Id = ", id);
-    //     const filter = { _id: new ObjectId(id) };
-    //     const options = { upsert: true };
-    //     const updatereadyBuild = req.body;
-    //     const readyBuildUpdate = {
-    //       $set: {
-    //         cpuName: updatereadyBuild.cpuName,
-    //         cpuImg: updatereadyBuild.cpuImg,
-    //         cpuModel: updatereadyBuild.cpuModel,
-    //         cpuPrice: updatereadyBuild.cpuPrice,
+    app.put("/createBuild/:id", verifyJwt, varifyAdminJwt, async (req, res) => {
+      try {
+        const id = req.params.id;
+        console.log("Id = ", id);
+        const filter = { _id: new ObjectId(id) };
+        const options = { upsert: true };
+        const updatereadyBuild = req.body;
+        const readyBuildUpdate = {
+          $set: {
+            cpuName: updatereadyBuild.cpuName,
+            cpuImg: updatereadyBuild.cpuImg,
+            cpuModel: updatereadyBuild.cpuModel,
+            cpuPrice: updatereadyBuild.cpuPrice,
 
-    //         cpuCoolerName: updatereadyBuild.cpuCoolerName,
-    //         cpuCoolerImg: updatereadyBuild.cpuCoolerImg,
-    //         cpuCoolerModel: updatereadyBuild.cpuCoolerModel,
-    //         cpuCoolerPrice: updatereadyBuild.cpuCoolerPrice,
+            cpuCoolerName: updatereadyBuild.cpuCoolerName,
+            cpuCoolerImg: updatereadyBuild.cpuCoolerImg,
+            cpuCoolerModel: updatereadyBuild.cpuCoolerModel,
+            cpuCoolerPrice: updatereadyBuild.cpuCoolerPrice,
 
-    //         mbName: updatereadyBuild.mbName,
-    //         mbImg: updatereadyBuild.mbImg,
-    //         mbModel: updatereadyBuild.mbModel,
-    //         mbPrice: updatereadyBuild.mbPrice,
+            mbName: updatereadyBuild.mbName,
+            mbImg: updatereadyBuild.mbImg,
+            mbModel: updatereadyBuild.mbModel,
+            mbPrice: updatereadyBuild.mbPrice,
 
-    //         memoryName: updatereadyBuild.memoryName,
-    //         memoryImg: updatereadyBuild.memoryImg,
-    //         memoryModel: updatereadyBuild.memoryModel,
-    //         memoryPrice: updatereadyBuild.memoryPrice,
+            memoryName: updatereadyBuild.memoryName,
+            memoryImg: updatereadyBuild.memoryImg,
+            memoryModel: updatereadyBuild.memoryModel,
+            memoryPrice: updatereadyBuild.memoryPrice,
 
-    //         monitorName: updatereadyBuild.monitorName,
-    //         monitorImg: updatereadyBuild.monitorImg,
-    //         monitorModel: updatereadyBuild.monitorModel,
-    //         monitorPrice: updatereadyBuild.monitorPrice,
+            monitorName: updatereadyBuild.monitorName,
+            monitorImg: updatereadyBuild.monitorImg,
+            monitorModel: updatereadyBuild.monitorModel,
+            monitorPrice: updatereadyBuild.monitorPrice,
 
-    //         storageName: updatereadyBuild.storageName,
-    //         storageImg: updatereadyBuild.storageImg,
-    //         storageModel: updatereadyBuild.storageModel,
-    //         storagePrice: updatereadyBuild.storagePrice,
+            storageName: updatereadyBuild.storageName,
+            storageImg: updatereadyBuild.storageImg,
+            storageModel: updatereadyBuild.storageModel,
+            storagePrice: updatereadyBuild.storagePrice,
 
-    //         gpuName: updatereadyBuild.gpuName,
-    //         gpuImg: updatereadyBuild.gpuImg,
-    //         gpuModel: updatereadyBuild.gpuModel,
-    //         gpuPrice: updatereadyBuild.gpuPrice,
+            gpuName: updatereadyBuild.gpuName,
+            gpuImg: updatereadyBuild.gpuImg,
+            gpuModel: updatereadyBuild.gpuModel,
+            gpuPrice: updatereadyBuild.gpuPrice,
 
-    //         caseName: updatereadyBuild.caseName,
-    //         caseImg: updatereadyBuild.caseImg,
-    //         caseModel: updatereadyBuild.caseModel,
-    //         casePrice: updatereadyBuild.casePrice,
+            caseName: updatereadyBuild.caseName,
+            caseImg: updatereadyBuild.caseImg,
+            caseModel: updatereadyBuild.caseModel,
+            casePrice: updatereadyBuild.casePrice,
 
-    //         psuName: updatereadyBuild.psuName,
-    //         psuImg: updatereadyBuild.psuImg,
-    //         psuModel: updatereadyBuild.psuModel,
-    //         psuPrice: updatereadyBuild.psuPrice,
+            psuName: updatereadyBuild.psuName,
+            psuImg: updatereadyBuild.psuImg,
+            psuModel: updatereadyBuild.psuModel,
+            psuPrice: updatereadyBuild.psuPrice,
 
-    //         img: updatereadyBuild.imgURL,
-    //         // couponsCode: updatereadyBuild.couponsCode,
-    //         // couponsDiscount: updatereadyBuild.couponsDiscount,
-    //         // startDate: updatereadyBuild.startDate,
-    //         // endDate: updatereadyBuild.endDate,
+            img: updatereadyBuild.imgURL,
+            // couponsCode: updatereadyBuild.couponsCode,
+            // couponsDiscount: updatereadyBuild.couponsDiscount,
+            // startDate: updatereadyBuild.startDate,
+            // endDate: updatereadyBuild.endDate,
 
-    //         buildName: updatereadyBuild.buildName,
-    //         details: updatereadyBuild.details,
-    //       },
-    //     };
-    //     const result = await guidesBuildCollection.updateOne(
-    //       filter,
-    //       readyBuildUpdate,
-    //       options
-    //     );
-    //     res.send(result);
-    //   } catch (err) {
-    //     res.send(500).send("Error Occured");
-    //   }
-    // });
+            buildName: updatereadyBuild.buildName,
+            details: updatereadyBuild.details,
+          },
+        };
+        const result = await guidesBuildCollection.updateOne(
+          filter,
+          readyBuildUpdate,
+          options
+        );
+        res.send(result);
+      } catch (err) {
+        res.send(500).send("Error Occured");
+      }
+    });
 
     // app.put("/createBuild/:id", verifyJwt, varifyAdminJwt, async (req, res) => {
     //   try {

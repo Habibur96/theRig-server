@@ -270,12 +270,9 @@ async function run() {
             psuPrice: updatereadyBuild.psuPrice,
 
             img: updatereadyBuild.imgURL,
-            // couponsCode: updatereadyBuild.couponsCode,
-            // couponsDiscount: updatereadyBuild.couponsDiscount,
-            // startDate: updatereadyBuild.startDate,
-            // endDate: updatereadyBuild.endDate,
 
             buildName: updatereadyBuild.buildName,
+            totalPrice: updatereadyBuild.totalPrice,
             details: updatereadyBuild.details,
           },
         };
@@ -468,6 +465,31 @@ async function run() {
       // const query = req.body;
       const result = await cartCollection.find(query).toArray();
       res.send(result);
+    });
+
+    app.put("/cart/:id", verifyJwt, async (req, res) => {
+      try {
+        const id = req.params.id;
+        console.log("Id = ", id);
+        const filter = { _id: new ObjectId(id) };
+        const options = { upsert: true };
+        const updateQuantity = req.body.quantity;
+        console.log("UpdateQuantity = ", updateQuantity);
+        const productQuantity = {
+          $set: {
+            quantity: updateQuantity,
+          },
+        };
+        const result = await cartCollection.updateOne(
+          filter,
+          productQuantity,
+          options
+        );
+        console.log("Result = ", result);
+        res.send(result);
+      } catch (err) {
+        res.send(500).send("Error Occured");
+      }
     });
 
     app.delete("/cart/:id", async (req, res) => {

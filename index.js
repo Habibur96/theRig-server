@@ -468,7 +468,7 @@ async function run() {
     });
 
     app.put("/cart/:id", verifyJwt, async (req, res) => {
-      try {
+      try { 
         const id = req.params.id;
         console.log("Id = ", id);
         const filter = { _id: new ObjectId(id) };

@@ -287,31 +287,8 @@ async function run() {
       }
     });
 
-    // app.put(
-    //   "/readyBuild/qty/:id",
-    //   verifyJwt,
-    //   varifyAdminJwt,
-    //   async (req, res) => {
-    //     const id = req.params.id;
-    //     console.log("Id = ", id);
-    //     const filter = { _id: new ObjectId(id) };
-    //     console.log("filter = ", filter);
-    //     const options = { upsert: true };
-    //     const updateQuantity = req.body;
-    //     console.log("updatereadyBuild = ", updateQuantity);
-    //     const updateQty = {
-    //       $set: {
-    //         buildQty: updateQuantity,
-    //       },
-    //     };
-    //     const result = await guidesBuildCollection.updateOne(
-    //       filter,
-    //       updateQty,
-    //       options
-    //     );
-    //     res.send(result);
-    //   }
-    // );
+   
+
 
     // app.put("/createBuild/:id", verifyJwt, varifyAdminJwt, async (req, res) => {
     //   try {
@@ -400,16 +377,25 @@ async function run() {
       res.send(result);
     });
 
-    app.patch("/users/admin/:id", async (req, res) => {
+    app.put("/users/role/:id", async (req, res) => {
       const id = req.params.id;
-      // console.log(id);
+      console.log("Id = ", id);
       const filter = { _id: new ObjectId(id) };
-      const updateDoc = {
+      const options = { upsert: true };
+      const { role: contributor } = req.body;
+
+      console.log("UpdateRole = ", contributor);
+      const updateRole = {
         $set: {
-          role: "admin",
+          role: contributor,
         },
       };
-      const result = await usersCollection.updateOne(filter, updateDoc);
+      const result = await usersCollection.updateOne(
+        filter,
+        updateRole,
+        options
+      );
+      console.log("Result = ", result);
       res.send(result);
     });
 
@@ -571,34 +557,49 @@ async function run() {
       });
     });
 
-    //payment related api
-
     app.post("/payments", verifyJwt, async (req, res) => {
       const payment = req.body;
+      console.log({ payment });
+
       const insertResult = await paymentCollection.insertOne(payment);
-      //delete each item from the cart
+
       const query = {
         _id: { $in: payment.cartIds.map((id) => new ObjectId(id)) },
       };
       const deleteResult = await cartCollection.deleteMany(query);
 
-      //send user email about payment confirmation
+      // Aggregate the update operations
+      const bulkOperations = payment.menuItemIds.map((menuItemId, index) => ({
+        updateOne: {
+          filter: { _id: new ObjectId(menuItemId) },
+          update: { $inc: { buildQty: -payment.menuItemQuantity[index] } },
+        },
+      }));
+
+      // Execute the bulk operations
+      const bulkWriteResult = await guidesBuildCollection.bulkWrite(
+        bulkOperations
+      );
+
+      console.log(bulkWriteResult); // Log the result of bulk write operation
+
+      // send user email about payment confirmation
       mg.messages
         .create(process.env.MAIL_SENDING_DOMAIN, {
           from: "Mailgun Sandbox <postmaster@sandboxeb26e7e0bd8343bb8651501e90b6f5c4.mailgun.org>",
           to: ["habiburrahmannayan66@gmail.com"],
           subject: "TheRig Order Confirmation",
-          text: "Testing some Mailgun awesomness!",
+          text: "Testing some Mailgun awesomeness!",
           html: `
-          <div>
-          <h2>Thank you for your order</h2>
-          <h4>Your Transaction Id: <strong>${payment.transactionId}</strong></h4>
-          <p>We would like to get your feedback about theRig</p>
-          </div>
-          `,
+              <div>
+                  <h2>Thank you for your order</h2>
+                  <h4>Your Transaction Id: <strong>${payment.transactionId}</strong></h4>
+                  <p>We would like to get your feedback about theRig</p>
+              </div>
+              `,
         })
         .then((msg) => console.log(msg)) // logs response data
-        .catch((err) => console.log(err)); // logs any error`;
+        .catch((err) => console.log(err)); // logs any error
 
       res.send({ insertResult, deleteResult });
     });

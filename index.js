@@ -287,6 +287,32 @@ async function run() {
       }
     });
 
+    // app.put(
+    //   "/readyBuild/qty/:id",
+    //   verifyJwt,
+    //   varifyAdminJwt,
+    //   async (req, res) => {
+    //     const id = req.params.id;
+    //     console.log("Id = ", id);
+    //     const filter = { _id: new ObjectId(id) };
+    //     console.log("filter = ", filter);
+    //     const options = { upsert: true };
+    //     const updateQuantity = req.body;
+    //     console.log("updatereadyBuild = ", updateQuantity);
+    //     const updateQty = {
+    //       $set: {
+    //         buildQty: updateQuantity,
+    //       },
+    //     };
+    //     const result = await guidesBuildCollection.updateOne(
+    //       filter,
+    //       updateQty,
+    //       options
+    //     );
+    //     res.send(result);
+    //   }
+    // );
+
     // app.put("/createBuild/:id", verifyJwt, varifyAdminJwt, async (req, res) => {
     //   try {
     //     const id = req.params.id;
@@ -468,7 +494,7 @@ async function run() {
     });
 
     app.put("/cart/:id", verifyJwt, async (req, res) => {
-      try { 
+      try {
         const id = req.params.id;
         console.log("Id = ", id);
         const filter = { _id: new ObjectId(id) };

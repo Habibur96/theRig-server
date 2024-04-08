@@ -88,6 +88,18 @@ async function run() {
       }
       next();
     };
+    // Warning: use verifyJWT before using verifyDeliveryAgent
+    const verifyDeliveryAgent = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      if (user?.role !== "deliveryAgent") {
+        return res
+          .status(403)
+          .send({ error: true, message: "forbidden message" });
+      }
+      next();
+    };
 
     app.post("/cpu", verifyJwt, varifyAdminJwt, async (req, res) => {
       const query = req.body;
@@ -287,9 +299,6 @@ async function run() {
       }
     });
 
-   
-
-
     // app.put("/createBuild/:id", verifyJwt, varifyAdminJwt, async (req, res) => {
     //   try {
     //     const id = req.params.id;
@@ -376,15 +385,24 @@ async function run() {
       const result = { admin: user?.role === "admin" };
       res.send(result);
     });
+    app.get("/users/deliveryAgent/:email", verifyJwt, async (req, res) => {
+      const email = req.params.email;
+
+      if (req.decoded.email !== email) {
+        res.send({ deliveryAgent: false });
+      }
+
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      const result = { deliveryAgent: user?.role === "deliveryAgent" };
+      res.send(result);
+    });
 
     app.put("/users/role/:id", async (req, res) => {
       const id = req.params.id;
-      console.log("Id = ", id);
       const filter = { _id: new ObjectId(id) };
       const options = { upsert: true };
       const { role: contributor } = req.body;
-
-      console.log("UpdateRole = ", contributor);
       const updateRole = {
         $set: {
           role: contributor,
@@ -395,7 +413,6 @@ async function run() {
         updateRole,
         options
       );
-      console.log("Result = ", result);
       res.send(result);
     });
 
@@ -581,7 +598,7 @@ async function run() {
         bulkOperations
       );
 
-      console.log(bulkWriteResult); // Log the result of bulk write operation
+     
 
       // send user email about payment confirmation
       mg.messages
@@ -616,14 +633,14 @@ async function run() {
 
     //=========================DashBoard admin related apis========================
 
-    app.get("/payments", verifyJwt, varifyAdminJwt, async (req, res) => {
+    app.get("/payments", verifyJwt, async (req, res) => {
       const query = req.body;
       const result = await paymentCollection.find(query).toArray();
 
       res.send(result);
     });
 
-    app.put("/payments/:id", verifyJwt, varifyAdminJwt, async (req, res) => {
+    app.put("/payments/:id", verifyJwt, async (req, res) => {
       try {
         const id = req.params.id;
         const filter = { _id: new ObjectId(id) };

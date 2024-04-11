@@ -1,6 +1,9 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
+const bodyParser = require("body-parser");
+const twilio = require("twilio");
+
 const jwt = require("jsonwebtoken");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
@@ -12,6 +15,16 @@ const mg = mailgun.client({
   username: "api",
   key: process.env.MAIL_GUN_API_KEY,
 });
+
+// Twilio credentials
+// const accountSid = process.env.twilio_accountSid
+// const authToken = process.env.cbfb1c9619284e00429d3f2cf2a4e7a8
+// const twilioPhoneNumber = process.env.twilioPhoneNumber
+
+// const client2 = new twilio(accountSid, authToken);
+
+// app.use(bodyParser.urlencoded({ extended: false }));
+// app.use(bodyParser.json());
 
 const port = process.env.PORT || 3000;
 //middleware
@@ -59,6 +72,7 @@ async function run() {
     const pcbuilderCartCollection = client
       .db("theRig")
       .collection("pcbuilderCart");
+    const pcbuilderCartId = client.db("theRig").collection("pcbuilderCartId");
     const paymentCollection = client.db("theRig").collection("payments");
     const wishlistCollection = client.db("theRig").collection("wishlist");
     const guidesBuildCollection = client.db("theRig").collection("guideBuild");
@@ -100,6 +114,61 @@ async function run() {
       }
       next();
     };
+
+    // Generate a random 6-digit OTP
+    // function generateOTP() {
+    //     return Math.floor(100000 + Math.random() * 900000);
+    // }
+
+    // // Endpoint to send OTP
+    // app.post('/sendotp', (req, res) => {
+    //     const phoneNumber = req.body.phoneNumber;
+
+    //     if (!phoneNumber) {
+    //         return res.status(400).send('Phone number is required');
+    //     }
+
+    //     const otp = generateOTP();
+
+    //     client.messages
+    //         .create({
+    //             body: `Your OTP is: ${otp}`,
+    //             from: twilioPhoneNumber,
+    //             to: phoneNumber
+    //         })
+    //         .then(message => {
+    //             console.log(`OTP sent to ${phoneNumber}: ${otp}`);
+    //             res.status(200).send('OTP sent successfully');
+    //         })
+    //         .catch(err => {
+    //             console.error('Error sending OTP:', err);
+    //             res.status(500).send('Error sending OTP');
+    //         });
+    // });
+
+    // // Endpoint to send messages
+    // app.post('/sendmessage', (req, res) => {
+    //     const { phoneNumber, message } = req.body;
+
+    //     if (!phoneNumber || !message) {
+    //         return res.status(400).send('Phone number and message are required');
+    //     }
+
+    //     client.messages
+    //         .create({
+    //             body: message,
+    //             from: twilioPhoneNumber,
+    //             to: phoneNumber
+    //         })
+    //         .then(message => {
+    //             console.log(`Message sent to ${phoneNumber}: ${message}`);
+    //             res.status(200).send('Message sent successfully');
+    //         })
+    //         .catch(err => {
+    //             console.error('Error sending message:', err);
+    //             res.status(500).send('Error sending message');
+    //         });
+    // });
 
     app.post("/cpu", verifyJwt, varifyAdminJwt, async (req, res) => {
       const query = req.body;
@@ -183,22 +252,124 @@ async function run() {
     });
 
     //====================pcbuilderCart related api=========================
+    // app.post("/pcbuilderCart", async (req, res) => {
+    //   const { cartItemId, email, category } = req.body;
 
+    //   try {
+    //     // Define the filter condition
+    //     const filterCondition = {
+    //       email,
+    //       category,
+    //     };
+
+    //     // Check if the item exists in both collections using the filter condition
+    //     const existingCartItem = await pcbuilderCartCollection.findOne(
+    //       filterCondition
+    //     );
+    //     const existingCartIdItem = await pcbuilderCartId.findOne(
+    //       filterCondition
+    //     );
+
+    //     // If the item already exists in either collection, remove it
+    //     if (existingCartItem) {
+    //       await pcbuilderCartCollection.deleteOne(filterCondition);
+    //     }
+
+    //     if (existingCartIdItem) {
+    //       await pcbuilderCartId.deleteOne(filterCondition);
+    //     }
+
+    //     // Insert the new item into pcbuilderCartCollection
+    //     const result = await pcbuilderCartCollection.insertOne(req.body);
+
+    //     // Insert the new item into pcbuilderCartId
+    //     const newCartIdItem = {
+    //       cartItemId,
+    //       email,
+    //       category,
+    //     };
+    //     const resultId = await pcbuilderCartId.insertOne(newCartIdItem);
+
+    //     // Return the inserted items' result as JSON response
+    //     res.json({ result, resultId });
+    //   } catch (error) {
+    //     console.error(error);
+    //     res.status(500).json({ error: "Internal server error" });
+    //   }
+    // });
+
+    // app.get("/pcbuilderCart", async (req, res) => {
+    //   const email = req.query.email;
+    //   const query = { email: email };
+
+    //   try {
+    //     const result = await pcbuilderCartCollection.find(query).toArray();
+    //     const pcbuilderId = await pcbuilderCartId.find({ email }).toArray();
+    //     res.status(200).json({ result, pcbuilderId });
+    //   } catch (error) {
+    //     console.error(error);
+    //     res.status(500).json({ error: "Internal server error" });
+    //   }
+    // });
+    // POST endpoint to add an item to the cart
+    // POST endpoint to add an item to the cart
+    // POST endpoint to add an item to the cart
     app.post("/pcbuilderCart", async (req, res) => {
-      const query = req.body;
-      // console.log({ query });
-      const result = await pcbuilderCartCollection.insertOne(query);
-      res.send(result);
+      const { cartItemId, email, category } = req.body;
+
+      try {
+        // Define the filter condition
+        const filterCondition = { email, category };
+
+        // Check if the item exists in either collection using the filter condition
+        const existingCartItem = await pcbuilderCartCollection.findOne(
+          filterCondition
+        );
+        const existingCartIdItem = await pcbuilderCartId.findOne(
+          filterCondition
+        );
+
+        // If the item already exists in either collection, remove it
+        if (existingCartItem) {
+          await pcbuilderCartCollection.deleteOne(filterCondition);
+        }
+
+        if (existingCartIdItem) {
+          await pcbuilderCartId.deleteOne(filterCondition);
+        }
+
+        // Insert the new item into pcbuilderCartCollection
+        await pcbuilderCartCollection.insertOne(req.body);
+
+        // Insert the new item into pcbuilderCartId
+        const newCartIdItem = { cartItemId, email, category };
+        await pcbuilderCartId.insertOne(newCartIdItem);
+
+        // Fetch updated data from the database
+        const result = await pcbuilderCartCollection.find({ email }).toArray();
+        const pcbuilderId = await pcbuilderCartId.find({ email }).toArray();
+
+        // Return the updated data as JSON response
+        res.status(200).json({ result, pcbuilderId });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     app.get("/pcbuilderCart", async (req, res) => {
       const email = req.query.email;
       const query = { email: email };
-      // const query = req.body;
-      const result = await pcbuilderCartCollection.find(query).toArray();
-      res.send(result);
-    });
 
+      try {
+        const result = await pcbuilderCartCollection.find(query).toArray();
+        const pcbuilderId = await pcbuilderCartId.find({ email }).toArray();
+        res.status(200).json({ result, pcbuilderId });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
     //========================GuidesBuild related apis==============
 
     app.post("/createBuild", verifyJwt, varifyAdminJwt, async (req, res) => {
@@ -597,8 +768,6 @@ async function run() {
       const bulkWriteResult = await guidesBuildCollection.bulkWrite(
         bulkOperations
       );
-
-     
 
       // send user email about payment confirmation
       mg.messages

@@ -1,8 +1,8 @@
 const express = require("express");
+const axios = require("axios");
 const cors = require("cors");
 const app = express();
 const bodyParser = require("body-parser");
-const twilio = require("twilio");
 
 const jwt = require("jsonwebtoken");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
@@ -15,23 +15,25 @@ const mg = mailgun.client({
   username: "api",
   key: process.env.MAIL_GUN_API_KEY,
 });
+// Middleware to parse JSON request bodies
+app.use(express.json());
 
-// Twilio credentials
-// const accountSid = process.env.twilio_accountSid
-// const authToken = process.env.cbfb1c9619284e00429d3f2cf2a4e7a8
-// const twilioPhoneNumber = process.env.twilioPhoneNumber
+// const SMS_API_KEY = process.env.SMS_API_KEY;
+// const SMS_API_URL = process.env.SMS_API_URL;
+// const OTP_EXPIRY_TIME = 5 * 60 * 1000; // 5 minutes
 
-// const client2 = new twilio(accountSid, authToken);
+const API_KEY = process.env.API_KEY; // Your API key
+const SENDER_ID = process.env.SENDER_ID; // Your sender I
 
-// app.use(bodyParser.urlencoded({ extended: false }));
-// app.use(bodyParser.json());
+// Store generated OTPs along with user info
+let otpStore = {};
 
 const port = process.env.PORT || 3000;
 //middleware
 app.use(cors());
 app.use(express.json());
 
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.fpcalbv.mongodb.net/?retryWrites=true&w=majority`;
+const uri = process.env.DB_URL;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -115,59 +117,79 @@ async function run() {
       next();
     };
 
-    // Generate a random 6-digit OTP
-    // function generateOTP() {
-    //     return Math.floor(100000 + Math.random() * 900000);
-    // }
+    
 
-    // // Endpoint to send OTP
-    // app.post('/sendotp', (req, res) => {
-    //     const phoneNumber = req.body.phoneNumber;
+    app.post("/sendmessage", async (req, res) => {
+      try {
+        const { phoneNumber, message } = req.body;
 
-    //     if (!phoneNumber) {
-    //         return res.status(400).send('Phone number is required');
-    //     }
+        // Check if phoneNumber and message are provided
+        if (!phoneNumber || !message) {
+          return res.status(400).json({
+            success: false,
+            message: "Phone number and message are required",
+          });
+        }
 
-    //     const otp = generateOTP();
+        // Generate random OTP
+        const otp = Math.floor(100000 + Math.random() * 900000);
 
-    //     client.messages
-    //         .create({
-    //             body: `Your OTP is: ${otp}`,
-    //             from: twilioPhoneNumber,
-    //             to: phoneNumber
-    //         })
-    //         .then(message => {
-    //             console.log(`OTP sent to ${phoneNumber}: ${otp}`);
-    //             res.status(200).send('OTP sent successfully');
-    //         })
-    //         .catch(err => {
-    //             console.error('Error sending OTP:', err);
-    //             res.status(500).send('Error sending OTP');
+        // Save OTP along with phone number and timestamp
+        otpStore[phoneNumber] = {
+          otp: otp.toString(),
+          timestamp: Date.now(),
+        };
+        // Send SMS with OTP and custom message
+        const messageToSend = `${message}. Your OTP is: ${otp}`;
+        // Send SMS
+        const response = await axios.post("http://bulksmsbd.net/api/smsapi", {
+          api_key: API_KEY,
+          senderid: SENDER_ID,
+          number: phoneNumber, // Assuming phoneNumber is a single string or an array of phone numbers
+          message: messageToSend,
+        });
+
+        console.log(response.data); // Log API response
+
+        res.json({ success: true, message: "SMS sent successfully" });
+      } catch (error) {
+        console.error("Error sending SMS:", error);
+        res.status(500).json({ success: false, message: "Failed to send SMS" });
+      }
+    });
+
+    //   app.post("/sendmessage", async (req, res) => {
+    //     try {
+    //         const { phoneNumber, message } = req.body;
+
+    //         // Check if phoneNumber and message are provided
+    //         if (!phoneNumber || !message) {
+    //             return res.status(400).json({ success: false, message: "Phone number and message are required" });
+    //         }
+
+    //         // Generate random OTP
+    //         const otp = Math.floor(100000 + Math.random() * 900000);
+
+    //         // Save OTP along with phone number and timestamp
+    //         otpStore[phoneNumber] = {
+    //             otp: otp.toString(),
+    //             timestamp: Date.now(),
+    //         };
+
+    //         // Send SMS
+    //         const response = await axios.post(SMS_API_URL, {
+    //             apiKey: SMS_API_KEY,
+    //             phoneNumber,
+    //             message: `${message}. Your OTP is: ${otp}`,
     //         });
-    // });
 
-    // // Endpoint to send messages
-    // app.post('/sendmessage', (req, res) => {
-    //     const { phoneNumber, message } = req.body;
+    //         console.log(response.data); // Log API response
 
-    //     if (!phoneNumber || !message) {
-    //         return res.status(400).send('Phone number and message are required');
+    //         res.json({ success: true, message: "OTP sent successfully" });
+    //     } catch (error) {
+    //         console.error("Error sending OTP:", error);
+    //         res.status(500).json({ success: false, message: "Failed to send OTP" });
     //     }
-
-    //     client.messages
-    //         .create({
-    //             body: message,
-    //             from: twilioPhoneNumber,
-    //             to: phoneNumber
-    //         })
-    //         .then(message => {
-    //             console.log(`Message sent to ${phoneNumber}: ${message}`);
-    //             res.status(200).send('Message sent successfully');
-    //         })
-    //         .catch(err => {
-    //             console.error('Error sending message:', err);
-    //             res.status(500).send('Error sending message');
-    //         });
     // });
 
     app.post("/cpu", verifyJwt, varifyAdminJwt, async (req, res) => {
@@ -252,68 +274,7 @@ async function run() {
     });
 
     //====================pcbuilderCart related api=========================
-    // app.post("/pcbuilderCart", async (req, res) => {
-    //   const { cartItemId, email, category } = req.body;
 
-    //   try {
-    //     // Define the filter condition
-    //     const filterCondition = {
-    //       email,
-    //       category,
-    //     };
-
-    //     // Check if the item exists in both collections using the filter condition
-    //     const existingCartItem = await pcbuilderCartCollection.findOne(
-    //       filterCondition
-    //     );
-    //     const existingCartIdItem = await pcbuilderCartId.findOne(
-    //       filterCondition
-    //     );
-
-    //     // If the item already exists in either collection, remove it
-    //     if (existingCartItem) {
-    //       await pcbuilderCartCollection.deleteOne(filterCondition);
-    //     }
-
-    //     if (existingCartIdItem) {
-    //       await pcbuilderCartId.deleteOne(filterCondition);
-    //     }
-
-    //     // Insert the new item into pcbuilderCartCollection
-    //     const result = await pcbuilderCartCollection.insertOne(req.body);
-
-    //     // Insert the new item into pcbuilderCartId
-    //     const newCartIdItem = {
-    //       cartItemId,
-    //       email,
-    //       category,
-    //     };
-    //     const resultId = await pcbuilderCartId.insertOne(newCartIdItem);
-
-    //     // Return the inserted items' result as JSON response
-    //     res.json({ result, resultId });
-    //   } catch (error) {
-    //     console.error(error);
-    //     res.status(500).json({ error: "Internal server error" });
-    //   }
-    // });
-
-    // app.get("/pcbuilderCart", async (req, res) => {
-    //   const email = req.query.email;
-    //   const query = { email: email };
-
-    //   try {
-    //     const result = await pcbuilderCartCollection.find(query).toArray();
-    //     const pcbuilderId = await pcbuilderCartId.find({ email }).toArray();
-    //     res.status(200).json({ result, pcbuilderId });
-    //   } catch (error) {
-    //     console.error(error);
-    //     res.status(500).json({ error: "Internal server error" });
-    //   }
-    // });
-    // POST endpoint to add an item to the cart
-    // POST endpoint to add an item to the cart
-    // POST endpoint to add an item to the cart
     app.post("/pcbuilderCart", async (req, res) => {
       const { cartItemId, email, category } = req.body;
 
@@ -338,6 +299,12 @@ async function run() {
           await pcbuilderCartId.deleteOne(filterCondition);
         }
 
+        // If a cartItemId is provided, remove the corresponding item
+        if (cartItemId) {
+          await pcbuilderCartCollection.deleteOne({ cartItemId });
+          await pcbuilderCartId.deleteOne({ cartItemId });
+        }
+
         // Insert the new item into pcbuilderCartCollection
         await pcbuilderCartCollection.insertOne(req.body);
 
@@ -357,16 +324,48 @@ async function run() {
       }
     });
 
-    app.get("/pcbuilderCart", async (req, res) => {
-      const email = req.query.email;
-      const query = { email: email };
+    app.get("/pcbuilderCart/:email", async (req, res) => {
+      const email = req.params.email;
 
       try {
-        const result = await pcbuilderCartCollection.find(query).toArray();
+        const result = await pcbuilderCartCollection.find({ email }).toArray();
         const pcbuilderId = await pcbuilderCartId.find({ email }).toArray();
         res.status(200).json({ result, pcbuilderId });
       } catch (error) {
         console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
+
+    app.delete("/pcbuilderCart/:cartItemId", async (req, res) => {
+      try {
+        const cartItemId = req.params.cartItemId;
+
+        // Validate input
+        if (!cartItemId) {
+          return res.status(400).json({ error: "Invalid cartItemId" });
+        }
+
+        // Delete item from pcbuilderCartCollection
+        const { deletedCount: deletedCartItem } =
+          await pcbuilderCartCollection.deleteOne({ cartItemId });
+        if (deletedCartItem === 0) {
+          return res
+            .status(404)
+            .json({ error: "Item not found in pcbuilderCartCollection" });
+        }
+
+        // Delete item from pcbuilderCartId collection
+        const { deletedCount: deletedCartIdItem } =
+          await pcbuilderCartId.deleteOne({ cartItemId });
+        if (deletedCartIdItem === 0) {
+          console.log("Item not found in pcbuilderCartId collection");
+        }
+
+        // Send success response
+        res.status(200).json({ message: "Item deleted successfully" });
+      } catch (error) {
+        console.error("Error occurred:", error);
         res.status(500).json({ error: "Internal server error" });
       }
     });

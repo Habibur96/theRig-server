@@ -17,16 +17,7 @@ const mg = mailgun.client({
 });
 // Middleware to parse JSON request bodies
 app.use(express.json());
-
-// const SMS_API_KEY = process.env.SMS_API_KEY;
-// const SMS_API_URL = process.env.SMS_API_URL;
-// const OTP_EXPIRY_TIME = 5 * 60 * 1000; // 5 minutes
-
-const API_KEY = process.env.API_KEY; // Your API key
-const SENDER_ID = process.env.SENDER_ID; // Your sender I
-
-// Store generated OTPs along with user info
-let otpStore = {};
+app.use(bodyParser.json());
 
 const port = process.env.PORT || 3000;
 //middleware
@@ -75,6 +66,7 @@ async function run() {
       .db("theRig")
       .collection("pcbuilderCart");
     const pcbuilderCartId = client.db("theRig").collection("pcbuilderCartId");
+    const savedPc = client.db("theRig").collection("savedPc");
     const paymentCollection = client.db("theRig").collection("payments");
     const wishlistCollection = client.db("theRig").collection("wishlist");
     const guidesBuildCollection = client.db("theRig").collection("guideBuild");
@@ -116,81 +108,6 @@ async function run() {
       }
       next();
     };
-
-    
-
-    app.post("/sendmessage", async (req, res) => {
-      try {
-        const { phoneNumber, message } = req.body;
-
-        // Check if phoneNumber and message are provided
-        if (!phoneNumber || !message) {
-          return res.status(400).json({
-            success: false,
-            message: "Phone number and message are required",
-          });
-        }
-
-        // Generate random OTP
-        const otp = Math.floor(100000 + Math.random() * 900000);
-
-        // Save OTP along with phone number and timestamp
-        otpStore[phoneNumber] = {
-          otp: otp.toString(),
-          timestamp: Date.now(),
-        };
-        // Send SMS with OTP and custom message
-        const messageToSend = `${message}. Your OTP is: ${otp}`;
-        // Send SMS
-        const response = await axios.post("http://bulksmsbd.net/api/smsapi", {
-          api_key: API_KEY,
-          senderid: SENDER_ID,
-          number: phoneNumber, // Assuming phoneNumber is a single string or an array of phone numbers
-          message: messageToSend,
-        });
-
-        console.log(response.data); // Log API response
-
-        res.json({ success: true, message: "SMS sent successfully" });
-      } catch (error) {
-        console.error("Error sending SMS:", error);
-        res.status(500).json({ success: false, message: "Failed to send SMS" });
-      }
-    });
-
-    //   app.post("/sendmessage", async (req, res) => {
-    //     try {
-    //         const { phoneNumber, message } = req.body;
-
-    //         // Check if phoneNumber and message are provided
-    //         if (!phoneNumber || !message) {
-    //             return res.status(400).json({ success: false, message: "Phone number and message are required" });
-    //         }
-
-    //         // Generate random OTP
-    //         const otp = Math.floor(100000 + Math.random() * 900000);
-
-    //         // Save OTP along with phone number and timestamp
-    //         otpStore[phoneNumber] = {
-    //             otp: otp.toString(),
-    //             timestamp: Date.now(),
-    //         };
-
-    //         // Send SMS
-    //         const response = await axios.post(SMS_API_URL, {
-    //             apiKey: SMS_API_KEY,
-    //             phoneNumber,
-    //             message: `${message}. Your OTP is: ${otp}`,
-    //         });
-
-    //         console.log(response.data); // Log API response
-
-    //         res.json({ success: true, message: "OTP sent successfully" });
-    //     } catch (error) {
-    //         console.error("Error sending OTP:", error);
-    //         res.status(500).json({ success: false, message: "Failed to send OTP" });
-    //     }
-    // });
 
     app.post("/cpu", verifyJwt, varifyAdminJwt, async (req, res) => {
       const query = req.body;
@@ -271,6 +188,16 @@ async function run() {
       const query = { name: name };
       const result = await pcbuilderCollection.find(query).toArray();
       res.send(result);
+    });
+
+    //===================SavedPc relaed api=========================
+    app.post("/savedPc", async (req, res) => {
+      const { savePc, email } = req.body;
+      console.log(savePc, email);
+      const newCartIdItem = { savePc, email };
+      await savedPc.insertOne(newCartIdItem);
+      res.send(newCartIdItem);
+      console.log(newCartIdItem);
     });
 
     //====================pcbuilderCart related api=========================

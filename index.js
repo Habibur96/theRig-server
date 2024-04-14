@@ -192,12 +192,35 @@ async function run() {
 
     //===================SavedPc relaed api=========================
     app.post("/savedPc", async (req, res) => {
-      const { savePc, email } = req.body;
-      console.log(savePc, email);
-      const newCartIdItem = { savePc, email };
-      await savedPc.insertOne(newCartIdItem);
-      res.send(newCartIdItem);
-      console.log(newCartIdItem);
+      try {
+        const { email } = req?.body;
+        const createPc = req?.body?.savepc;
+
+        console.log("Request:", createPc, email);
+
+        const newCartIdItem = { createPc, email };
+
+        // Save the new PC configuration to the collection
+        await savedPc.insertOne(newCartIdItem);
+
+        // Log success message to console
+        console.log("Data saved successfully:", newCartIdItem);
+
+        // Remove matching data from pcbuilderCart collection where email matches
+        await pcbuilderCartCollection.deleteMany({ email });
+
+        // Remove matching data from pcbuilderCartId collection where email matches
+        await pcbuilderCartId.deleteMany({ email });
+
+        // Send a success message back to the client
+        res.status(200).send("Data saved successfully");
+      } catch (error) {
+        // Handle the error
+        console.error("Error occurred while processing request:", error);
+
+        // Send an appropriate error response to the client
+        res.status(500).send("Internal Server Error: " + error.message);
+      }
     });
 
     //====================pcbuilderCart related api=========================

@@ -183,9 +183,9 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/cpu/:collectionName/:name", async (req, res) => {
-      const name = req.params.name;
-      const query = { name: name };
+    app.get("/cpu/:collectionName/:model", async (req, res) => {
+      const model = req.params.model;
+      const query = { model: model };
       const result = await pcbuilderCollection.find(query).toArray();
       res.send(result);
     });
